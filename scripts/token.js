@@ -14,8 +14,8 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const TokenName = 'DORAEMON 2';
-  const Symbol = 'DORAEMON 2';
+  const TokenName = 'FLUID FINANCE';
+  const Symbol = 'FLD';
   const Greeter = await hre.ethers.getContractFactory("Token");
   const greeter = await Greeter.deploy(TokenName, Symbol);
 

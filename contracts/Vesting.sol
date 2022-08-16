@@ -2,22 +2,28 @@
 
 pragma solidity >=0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 
-contract Vesting is Ownable, AccessControl, ReentrancyGuard, Pausable {
+contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
 
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     address public token;
     address public vestingDistributionAddress;
-    uint256 public PERICSE_FACTOR = 10**12;
+    // uint256 constant public PRECISE_FACTOR = 10**12;
+    uint32 constant public ONE_DAY = 60 * 60 *24;
+    uint32 constant public PRECISE_TGE = 10000;
     bytes32 public root;
+
+    // bytes32 constant public BIG_ADMIN_ROLE = keccak256("BIG_ADMIN_ROLE");
+    // bytes32 constant public ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
 
     struct VestingSchedule{
@@ -27,17 +33,15 @@ contract Vesting is Ownable, AccessControl, ReentrancyGuard, Pausable {
         // total amount claimed
         uint256 claimed;
         // start vesting time
-        uint256 start;
+        uint32 start;
         // cliff duration
-        uint256 cliff;
+        uint32 cliff;
         // vesting duration
-        uint256 duration;
-        // lastTimestamp claim token
-        uint256 lastTimeStamp;
-        
-        uint256 lasTimeStampClaim;
+        uint32 duration;
+        // last time day Index
+        uint32 lasTimeStampClaim;
         // TGE percentage
-        uint128 TGE;
+        uint16 TGE;
 
     }
 
@@ -46,10 +50,24 @@ contract Vesting is Ownable, AccessControl, ReentrancyGuard, Pausable {
 
     event UpdateAdmin(address indexed user, bool status);
 
-    constructor(address _token, address _vestingDistributionAddress) {
+    // constructor(address _token, address _vestingDistributionAddress) {
+    //     token = _token;
+    //     vestingDistributionAddress = _vestingDistributionAddress;
+    //     admin[msg.sender] = true;
+    // }
+
+    function initialize(address _token, address _vestingDistributionAddress) external initializer {
+
         token = _token;
         vestingDistributionAddress = _vestingDistributionAddress;
         admin[msg.sender] = true;
+
+        // _setRoleAdmin(ADMIN_ROLE, BIG_ADMIN_ROLE);
+        // _setupRole(BIG_ADMIN_ROLE, msg.sender);
+        // _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+
+        __Ownable_init();
+        __Pausable_init();
     }
     
     function addAdmin(address _AddAdmin) external onlyOwner {
@@ -68,14 +86,20 @@ contract Vesting is Ownable, AccessControl, ReentrancyGuard, Pausable {
         root = _root;
     }
 
-    // Mapping: check TGE, current vesting amount, lastTimeStamp 
-    // Merkle tree leaf: Address, Total Vesting Amount, TGE, StartVestingTime, CliffTime, Vesting Period, 
+    function updateVestingDistributionAddress(address _address) external onlyAdmin {
+        vestingDistributionAddress = _address;
+    }
 
-    function claimToken(uint _allocationType, uint256 _totalVestingAmount, uint128 _TGE, uint128 _startTime, uint128 _cliffDuration, uint128 _vestingDuration, bytes32[] memory proof) external nonReentrant { 
+    function updateTokenAddress(address _token) external onlyAdmin {
+        token = _token;
+    }
+
+    function claimToken(uint _allocationType, uint256 _totalVestingAmount, uint16 _TGE, uint32 _startTime, uint32 _cliffDuration, uint32 _vestingDuration, bytes32[] memory proof) external nonReentrant whenNotPaused { 
 
         VestingSchedule storage user = userVestingSchedule[msg.sender][_allocationType];
 
         require(_verifyVestingUser(msg.sender, _allocationType, _totalVestingAmount, _TGE, _startTime, _cliffDuration, _vestingDuration, proof), "INVALID_MERKLE");
+        require(_TGE <= 10000, "INVALID TGE");
         require(user.claimed + user.TGEAmount < _totalVestingAmount , "Claim Enough");
 
         if (user.totalVestingAmount == 0) {
@@ -89,52 +113,44 @@ contract Vesting is Ownable, AccessControl, ReentrancyGuard, Pausable {
 
         if (user.TGE == 0) {
 
-            if (block.timestamp < _startTime + _cliffDuration) {
-                amountVesting = (_totalVestingAmount * _TGE) / 10000;
-                user.TGEAmount = amountVesting;
-                
-                user.lasTimeStampClaim = (_startTime + _cliffDuration) / (60 * 60 * 24);
-            }
-            else {
-                // amount tge Token
-                uint256 tgeVesting = (_totalVestingAmount * _TGE) / 10000;
-                user.TGEAmount = tgeVesting;
-  
-                
+            uint256 tgeVesting = (_totalVestingAmount * _TGE) / PRECISE_TGE;
+            user.TGEAmount = tgeVesting;
+            amountVesting = tgeVesting;
+            user.lasTimeStampClaim = (_startTime + _cliffDuration) / ONE_DAY;
+
+            if (block.timestamp >= _startTime + _cliffDuration) {
+
                 // amount token after cliff duration
-                user.lasTimeStampClaim = (_startTime + _cliffDuration) / (60 * 60 * 24);
-                (uint256 claimable, uint256 nextDaysClaim) = claimableToken(msg.sender, _allocationType);
-                amountVesting = claimable + tgeVesting;
+                (uint256 claimable, uint32 nextDaysClaim) = claimableToken(msg.sender, _allocationType);
+                amountVesting = amountVesting + claimable;
                 
                 user.lasTimeStampClaim = user.lasTimeStampClaim + nextDaysClaim;
-                user.claimed = user.claimed + claimable;
+                user.claimed = user.claimed + claimable;            
             }
 
             user.TGE = _TGE;
-            user.lastTimeStamp = block.timestamp;
         }
         else {
             require(block.timestamp >= user.start + user.cliff, "Cliff Error");
-            require(block.timestamp / (60 * 60 * 24) >= user.lasTimeStampClaim, "Period Error");
+            require(block.timestamp / ONE_DAY >= user.lasTimeStampClaim, "Period Error");
             
-            uint256 nextDaysClaim;
+            uint32 nextDaysClaim;
 
             (amountVesting, nextDaysClaim) = claimableToken(msg.sender, _allocationType);
 
             user.claimed = user.claimed + amountVesting;
-            user.lastTimeStamp = block.timestamp;
             user.lasTimeStampClaim = user.lasTimeStampClaim + nextDaysClaim;
         }
         
-        IERC20(token).safeTransferFrom(address(vestingDistributionAddress), address(msg.sender), amountVesting);
+        IERC20Upgradeable(token).safeTransferFrom(address(vestingDistributionAddress), address(msg.sender), amountVesting);
     }
 
-    function claimableToken(address _user, uint _allocationType) public view returns(uint256, uint256) {
+    function claimableToken(address _user, uint _allocationType) public view returns(uint256, uint32) {
         VestingSchedule storage user = userVestingSchedule[_user][_allocationType];
 
-        uint256 dayIndex = block.timestamp / (60 * 60 * 24);
-        uint256 claimTimes = dayIndex - user.lasTimeStampClaim + 1;
-        uint256 dayDurationVesting = user.duration / (60 * 60 * 24);
+        uint32 dayIndex = uint32(block.timestamp / ONE_DAY);
+        uint32 claimTimes = dayIndex - user.lasTimeStampClaim + 1;
+        uint256 dayDurationVesting = user.duration / ONE_DAY;
 
         if (block.timestamp >=  user.start + user.cliff + user.duration) {
             return (((user.totalVestingAmount - user.TGEAmount) - user.claimed), claimTimes);
@@ -162,17 +178,17 @@ contract Vesting is Ownable, AccessControl, ReentrancyGuard, Pausable {
     ) internal view returns (bool) {
         bytes32 leaf = keccak256(abi.encodePacked(_user, _allocationType, _totalVestingAmount, _TGE, _startTime, _cliffDuration, _vestingDuration));
 
-        return MerkleProof.verify(proof, root, leaf);
+        return MerkleProofUpgradeable.verify(proof, root, leaf);
     }
 
     function getRemainVestingToken(address _token) public view returns(uint256) {
-        return IERC20(_token).balanceOf(address(this));
+        return IERC20Upgradeable(_token).balanceOf(address(this));
     }
 
     function emergencyWithdraw(address _token) external onlyAdmin {
         uint256 balance = getRemainVestingToken(_token);
 
-        IERC20(_token).transfer(msg.sender, balance);
+        IERC20Upgradeable(_token).transfer(msg.sender, balance);
     } 
 
     function viewBlock() external view returns(uint256) {
