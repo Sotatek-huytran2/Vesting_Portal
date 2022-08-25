@@ -15,12 +15,29 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    uint16 public constant ANGEL_ADDRESS_INDEX = 0;
+    uint16 public constant PRESEED_ADDRESS_INDEX = 1;
+    uint16 public constant SEED_ADDRESS_INDEX = 2;
+    uint16 public constant PRIVATE_1_ADDRESS_INDEX = 3;
+    uint16 public constant PRIVATE_2_ADDRESS_INDEX = 4;
+    uint16 public constant PUBLIC_ADDRESS_INDEX = 5;
+    uint16 public constant REWARDS_ADDRESS_INDEX = 6;
+    uint16 public constant TEAM_ADDRESS_INDEX = 7;
+    uint16 public constant ADVISORS_ADDRESS_INDEX = 8;
+    uint16 public constant MARKETING_ADDRESS_INDEX = 9;
+    uint16 public constant RESEARCH_FOUNDATION_ADDRESS_INDEX = 10;
+    uint16 public constant OPERATIONS_ADDRESS_INDEX = 11;
+    uint16 public constant ECOSYSTEM_ADDRESS_INDEX = 12;
+    uint16 public constant LIQUIDITY_ADDRESS_INDEX = 13;
+    uint16 public constant REVERSE_ADDRESS_INDEX = 14;
+
     address public token;
-    address public vestingDistributionAddress;
     // uint256 constant public PRECISE_FACTOR = 10**12;
     uint32 constant public ONE_DAY = 60 * 60 *24;
     uint32 constant public PRECISE_TGE = 10000;
     bytes32 public root;
+
+    
 
     // bytes32 constant public BIG_ADMIN_ROLE = keccak256("BIG_ADMIN_ROLE");
     // bytes32 constant public ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -46,9 +63,11 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
     }
 
     mapping(address =>  mapping(uint => VestingSchedule)) public userVestingSchedule;
+    mapping(uint => address) public allocationAddress; 
     mapping(address => bool) public admin;
 
     event UpdateAdmin(address indexed user, bool status);
+    event ClaimToken(address user, uint allocationType, uint256 totalVestingAmount, uint16 TGE, uint32 startTime, uint32 cliffDuration, uint32 vestingDuration, bytes32[] proof);
 
     // constructor(address _token, address _vestingDistributionAddress) {
     //     token = _token;
@@ -56,15 +75,30 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
     //     admin[msg.sender] = true;
     // }
 
-    function initialize(address _token, address _vestingDistributionAddress) external initializer {
+    function initialize(address _token, address[15] calldata _address) external initializer {
 
         token = _token;
-        vestingDistributionAddress = _vestingDistributionAddress;
         admin[msg.sender] = true;
 
         // _setRoleAdmin(ADMIN_ROLE, BIG_ADMIN_ROLE);
         // _setupRole(BIG_ADMIN_ROLE, msg.sender);
         // _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    
+        allocationAddress[ANGEL_ADDRESS_INDEX] = _address[ANGEL_ADDRESS_INDEX];
+        allocationAddress[PRESEED_ADDRESS_INDEX] = _address[PRESEED_ADDRESS_INDEX];
+        allocationAddress[SEED_ADDRESS_INDEX] = _address[SEED_ADDRESS_INDEX];
+        allocationAddress[PRIVATE_1_ADDRESS_INDEX] = _address[PRIVATE_1_ADDRESS_INDEX];
+        allocationAddress[PRIVATE_2_ADDRESS_INDEX] = _address[PRIVATE_2_ADDRESS_INDEX];
+        allocationAddress[PUBLIC_ADDRESS_INDEX] = _address[PUBLIC_ADDRESS_INDEX];
+        allocationAddress[REWARDS_ADDRESS_INDEX] = _address[REWARDS_ADDRESS_INDEX];
+        allocationAddress[TEAM_ADDRESS_INDEX] = _address[TEAM_ADDRESS_INDEX];
+        allocationAddress[ADVISORS_ADDRESS_INDEX] = _address[ADVISORS_ADDRESS_INDEX];
+        allocationAddress[MARKETING_ADDRESS_INDEX] = _address[MARKETING_ADDRESS_INDEX];
+        allocationAddress[RESEARCH_FOUNDATION_ADDRESS_INDEX] = _address[RESEARCH_FOUNDATION_ADDRESS_INDEX];
+        allocationAddress[OPERATIONS_ADDRESS_INDEX] = _address[OPERATIONS_ADDRESS_INDEX];
+        allocationAddress[ECOSYSTEM_ADDRESS_INDEX] = _address[ECOSYSTEM_ADDRESS_INDEX];
+        allocationAddress[LIQUIDITY_ADDRESS_INDEX] = _address[LIQUIDITY_ADDRESS_INDEX];
+        allocationAddress[REVERSE_ADDRESS_INDEX] = _address[REVERSE_ADDRESS_INDEX];
 
         __Ownable_init();
         __Pausable_init();
@@ -86,20 +120,21 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
         root = _root;
     }
 
-    function updateVestingDistributionAddress(address _address) external onlyAdmin {
-        vestingDistributionAddress = _address;
-    }
-
     function updateTokenAddress(address _token) external onlyAdmin {
         token = _token;
+    }
+
+    function updateAllocationAddress(uint16 _allocationIndex, address _address) external onlyAdmin {
+        require(_allocationIndex <= 14, "INVALID INDEX");
+        allocationAddress[_allocationIndex] = _address;
     }
 
     function claimToken(uint _allocationType, uint256 _totalVestingAmount, uint16 _TGE, uint32 _startTime, uint32 _cliffDuration, uint32 _vestingDuration, bytes32[] memory proof) external nonReentrant whenNotPaused { 
 
         VestingSchedule storage user = userVestingSchedule[msg.sender][_allocationType];
 
-        require(_verifyVestingUser(msg.sender, _allocationType, _totalVestingAmount, _TGE, _startTime, _cliffDuration, _vestingDuration, proof), "INVALID_MERKLE");
         require(_TGE <= 10000, "INVALID TGE");
+        require(_verifyVestingUser(msg.sender, _allocationType, _totalVestingAmount, _TGE, _startTime, _cliffDuration, _vestingDuration, proof), "INVALID_MERKLE");
         require(user.claimed + user.TGEAmount < _totalVestingAmount , "Claim Enough");
 
         if (user.totalVestingAmount == 0) {
@@ -142,7 +177,9 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
             user.lasTimeStampClaim = user.lasTimeStampClaim + nextDaysClaim;
         }
         
-        IERC20Upgradeable(token).safeTransferFrom(address(vestingDistributionAddress), address(msg.sender), amountVesting);
+        IERC20Upgradeable(token).safeTransferFrom(address(allocationAddress[_allocationType]), address(msg.sender), amountVesting);
+
+        emit ClaimToken(msg.sender, _allocationType, _totalVestingAmount, _TGE, _startTime, _cliffDuration, _vestingDuration, proof);
     }
 
     function claimableToken(address _user, uint _allocationType) public view returns(uint256, uint32) {
@@ -152,6 +189,10 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
         uint32 claimTimes = dayIndex - user.lasTimeStampClaim + 1;
         uint256 dayDurationVesting = user.duration / ONE_DAY;
 
+        if (dayDurationVesting <= 0) {
+            return ((user.totalVestingAmount - user.TGEAmount), claimTimes);
+        }
+
         if (block.timestamp >=  user.start + user.cliff + user.duration) {
             return (((user.totalVestingAmount - user.TGEAmount) - user.claimed), claimTimes);
         }
@@ -159,7 +200,7 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
         // uint256 remainTime = (((block.timestamp - user.lastTimeStamp) * PERICSE_FACTOR) / user.duration);
         // uint256 amountVesting = ((user.totalVestingAmount - user.TGEAmount) * remainTime) / PERICSE_FACTOR;
 
-        uint256 amountVesting = (user.totalVestingAmount / dayDurationVesting) * claimTimes;  
+        uint256 amountVesting = ((user.totalVestingAmount - user.TGEAmount) / dayDurationVesting) * claimTimes;  
         
         return (amountVesting, claimTimes);
     }
@@ -170,10 +211,10 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
        address _user,
        uint _allocationType, 
        uint256 _totalVestingAmount, 
-       uint128 _TGE, 
-       uint128 _startTime, 
-       uint128 _cliffDuration, 
-       uint128 _vestingDuration,
+       uint16 _TGE, 
+       uint32 _startTime, 
+       uint32 _cliffDuration, 
+       uint32 _vestingDuration,
        bytes32[] memory proof
     ) internal view returns (bool) {
         bytes32 leaf = keccak256(abi.encodePacked(_user, _allocationType, _totalVestingAmount, _TGE, _startTime, _cliffDuration, _vestingDuration));

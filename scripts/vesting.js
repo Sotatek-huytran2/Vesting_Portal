@@ -17,7 +17,26 @@ async function main() {
   /// ================ Deploy Proxy ==========================
   // We get the contract to deploy
   const tokenAddress = '0x2507E77133A8D3923299fb79623Cebe7d26b100A';
-  const vestingDistributionAddress = '0xd6F8595B0a1808dA9b529Da525F1101716618D1A';
+  // const vestingDistributionAddress = '0xd6F8595B0a1808dA9b529Da525F1101716618D1A';
+
+  const vestingDistributionAddress = [
+    '0xd6F8595B0a1808dA9b529Da525F1101716618D1A',
+    '0xd70C789cd4f04BbEc138eFcf2e3A0B076A6ca09c',
+    '0x37a78aFb4Dc450752Ec5DbfD0ae015060DEB5D44',
+    '0x20E31b0DdFAe840B22Dd3979F9582D7dc0FF97f0',
+    '0x347e41C39dd10c4c7869097b441a38D1Cc0149A3',
+    '0x5B83EB2F9F9a003Ccd71C01D9bD5ea86bB963fD3',
+    '0x50778d11E1b2fF2D54c7A9b1e5FdadD6b1487637',
+    '0x9e6397cEE6646eC1278Df490F235AC54a9F6C78F',
+    '0x59066C7B22da34FFB58C4ea25855C09D7113e704',
+    '0x20C2de4693A2FD30a8f30ef3c285BAeF60a2F965',
+    '0x99DC161e816d0EEB1c74e9EE90FCa4D3B92117f0',
+    '0xEe6A279B24Dd74322E3A86DE343141e3EefB3aad',
+    '0x7F8ABD6eeE305FF803e9dFbB0016D224F25912B3',
+    '0x951fF9b6F74d971C7C6737ee83493558dF210d5d',
+    '0x6C04016047310c87A72F8B595580cDE3AB5d1144'
+  ]
+
   const VESTING = await hre.ethers.getContractFactory("Vesting");
   const vesting = await upgrades.deployProxy(VESTING, [tokenAddress, vestingDistributionAddress], {initializer: 'initialize'});
   // const vesting = await VESTING.deploy(tokenAddress, vestingDistributionAddress);
