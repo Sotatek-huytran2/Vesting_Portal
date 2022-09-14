@@ -20,39 +20,44 @@ async function main() {
   // const vestingDistributionAddress = '0xd6F8595B0a1808dA9b529Da525F1101716618D1A';
 
   const vestingDistributionAddress = [
-    '0xd6F8595B0a1808dA9b529Da525F1101716618D1A',
-    '0xd70C789cd4f04BbEc138eFcf2e3A0B076A6ca09c',
-    '0x37a78aFb4Dc450752Ec5DbfD0ae015060DEB5D44',
-    '0x20E31b0DdFAe840B22Dd3979F9582D7dc0FF97f0',
-    '0x347e41C39dd10c4c7869097b441a38D1Cc0149A3',
-    '0x5B83EB2F9F9a003Ccd71C01D9bD5ea86bB963fD3',
-    '0x50778d11E1b2fF2D54c7A9b1e5FdadD6b1487637',
-    '0x9e6397cEE6646eC1278Df490F235AC54a9F6C78F',
-    '0x59066C7B22da34FFB58C4ea25855C09D7113e704',
-    '0x20C2de4693A2FD30a8f30ef3c285BAeF60a2F965',
-    '0x99DC161e816d0EEB1c74e9EE90FCa4D3B92117f0',
-    '0xEe6A279B24Dd74322E3A86DE343141e3EefB3aad',
-    '0x7F8ABD6eeE305FF803e9dFbB0016D224F25912B3',
-    '0x951fF9b6F74d971C7C6737ee83493558dF210d5d',
-    '0x6C04016047310c87A72F8B595580cDE3AB5d1144'
+    '0x82b62b49823799DFb801691bFc7707Ff7625377e',
+    '0xeE4371E78bA306d14581efCDC40479f1796735CC',
+    '0x3dB4ED769f35fd694e5DE2A8b3bb79477dC7876B',
+    '0xeA52Be1BB4174209C7820C597Bc19151B70b5047',
+    '0xdBcee4D1548df8D1ba6D3E9Ce2B83c103441FEAa',
+    '0x4B1f89390D711d8B7452d2cAcEa696F5b159d45b',
+    '0x870B909A579914190C3222CB1136dBD9D19d145b',
+    '0xc12069A488d8653C865E6A523bbDBb4AFa0F59dF',
+    '0x720F0Ee2F58c99Abe91e08172e8C68401Cd0201c',
+    '0x9A2d9Cd3B7D14cA40198C33216Dc827145C270E7',
+    '0xEc4F5cdE80Eba95dAdCC0125ab8aB82928BE0282',
+    '0xe56f65F3Cb896048A5736Ad8EC29909FB3E43232',
+    '0x8C003d32db396AF67222D8BF8AAe394910BAb9aE',
+    '0x59bC8B84A7298299F94f101606197D9b4935cdaD',
+    '0xeB7Fca9fBc93170aE435ec0540598b738707d6Ce'
   ]
 
+
+  const ONE_DAY = 24 * 60 * 60;
+
   const VESTING = await hre.ethers.getContractFactory("Vesting");
-  const vesting = await upgrades.deployProxy(VESTING, [tokenAddress, vestingDistributionAddress], {initializer: 'initialize'});
-  // const vesting = await VESTING.deploy(tokenAddress, vestingDistributionAddress);
+  const vesting = await upgrades.deployProxy(VESTING, [tokenAddress, ONE_DAY, vestingDistributionAddress], {initializer: 'initialize'});
+  // const vesting = await VESTING.deploy();
 
   await vesting.deployed();
 
   console.log("VESTING PORTAL PROXY deployed at: ", vesting.address);
+
+  // await vesting.initialize(tokenAddress, ONE_DAY, vestingDistributionAddress);
   /// ================ Deploy Proxy ==========================
 
-  // /// ================ UPGRADE ==========================
-  // const treasuryProxyAddress = "0x5173cce22A2fbCF0f8324B96C0651e369450474D"
-  // const Treasury = await ethers.getContractFactory("TreasuryV2");
-  // const treasury = await upgrades.upgradeProxy(treasuryProxyAddress, Treasury);
+  /// ================ UPGRADE ==========================
+  // const ProxyAddress = "0x8123Bfa60cC3ae34Ea7c000dCE0B429D8Edd7F93"
+  // const Treasury = await ethers.getContractFactory("Vesting_V2");
+  // const treasury = await upgrades.upgradeProxy(ProxyAddress, Treasury);
 
-  // console.log("treasury upgraded: ", treasury.address);
-  // /// ================ UPGRADE ==========================
+  // console.log("Vesting upgraded: ", treasury.address);
+  /// ================ UPGRADE ==========================
 
 
   // await hre.run("verify:verify", {

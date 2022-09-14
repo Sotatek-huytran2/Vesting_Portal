@@ -41,6 +41,8 @@ describe("VESTING", function () {
       reserveAddress.address
     ]
 
+    const ONE_DAY = 24 * 60 * 60;
+
     // const vestingDistributionAddress = [angleAddress, preSeedAddress,
     //     seedAddress, private_1_Address, private_2_Address,
     //     publicAddress, rewardAddress, teamAddress,
@@ -55,7 +57,7 @@ describe("VESTING", function () {
     const VESTING = await ethers.getContractFactory("Vesting");
     const vesting = await VESTING.deploy();
 
-    await vesting.connect(owner).initialize(token.address, vestingDistributionAddress);
+    await vesting.connect(owner).initialize(token.address, ONE_DAY, vestingDistributionAddress);
 
     await token.connect(preSeedAddress).mint(preSeedAddress.address, ethers.BigNumber.from(1000000));
     await token.connect(preSeedAddress).approve(vesting.address, ethers.BigNumber.from(1000000));
@@ -65,6 +67,7 @@ describe("VESTING", function () {
     buyVesting = [
       {
         candidate: wallet_1.address,
+        id: 1,
         allocationType: 1,
         totalVestingAmount: 100,
         TGE: 1000,
@@ -73,7 +76,8 @@ describe("VESTING", function () {
         vestingDuration: 864000,
       },
       {
-        candidate: wallet_2.address,
+        candidate: "0x83eA340C0b19A952E6384ACCC9f39b1A5a31552c",
+        id: 2,
         allocationType: 1,
         totalVestingAmount: 100,
         TGE: 1000,
@@ -83,6 +87,7 @@ describe("VESTING", function () {
       },
       {
         candidate: wallet_3.address,
+        id: 3,
         allocationType: 1,
         totalVestingAmount: 2000,
         TGE: 1000,
@@ -92,6 +97,7 @@ describe("VESTING", function () {
       },
       {
         candidate: wallet_4.address,
+        id: 4,
         allocationType: 1,
         totalVestingAmount: ethers.BigNumber.from(100),
         TGE: 1000,
@@ -103,8 +109,8 @@ describe("VESTING", function () {
 
     const leafNodes = buyVesting.map((obj) => {
       let leafNode = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
       return ethers.utils.solidityKeccak256(["bytes"], [leafNode]);
     });
@@ -113,11 +119,90 @@ describe("VESTING", function () {
       sortPairs: true,
     });
 
+    obj = buyVesting[3];
+    
+    const leaf = ethers.utils.solidityPack(
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+    );
+
+    const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
+    const proof = vestingMerkleTree.getHexProof(leafNode);
+
+    console.log(`${proof} =============== root`)
+
+    buyVesting_re = [
+      {
+        candidate: wallet_1.address,
+        id: 1,
+        allocationType: 1,
+        totalVestingAmount: 100,
+        TGE: 1000,
+        start: Math.floor(new Date().getTime() / 1000),
+        cliffDuration: 86400,
+        vestingDuration: 864000,
+      },
+      {
+        candidate: "0x83eA340C0b19A952E6384ACdC9f39b1A5a31552c",
+        id: 2,
+        allocationType: 1,
+        totalVestingAmount: 100,
+        TGE: 1000,
+        start: Math.floor(new Date().getTime() / 1000),
+        cliffDuration: 86400,
+        vestingDuration: 864000,
+      },
+      {
+        candidate: wallet_3.address,
+        id: 3,
+        allocationType: 1,
+        totalVestingAmount: 2000,
+        TGE: 1000,
+        start: Math.floor(new Date().getTime() / 1000),
+        cliffDuration: 86400,
+        vestingDuration: 864000,
+      },
+      {
+        candidate: wallet_4.address,
+        id: 4,
+        allocationType: 1,
+        totalVestingAmount: ethers.BigNumber.from(100),
+        TGE: 1000,
+        start: startTime_1,
+        cliffDuration: 86400,
+        vestingDuration: 864000,
+      },
+    ];
+
+    const leafNodes_re = buyVesting_re.map((obj) => {
+      let leafNode = ethers.utils.solidityPack(
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+      );
+      return ethers.utils.solidityKeccak256(["bytes"], [leafNode]);
+    });
+
+    vestingMerkleTree = new MerkleTree(leafNodes_re, keccak256, {
+      sortPairs: true,
+    });
+
+    obj = buyVesting[3];
+    
+    const leaf_re = ethers.utils.solidityPack(
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+    );
+
+    const leafNode_re = ethers.utils.solidityKeccak256(["bytes"], [leaf_re]);
+    const proof_re = vestingMerkleTree.getHexProof(leafNode_re);
+
+    console.log(`${proof_re} =============== new`)
+
     // const adminRole = ethers.utils.solidityPack(["string"], ["ADMIN_ROLE"]);
     // const ADMIN_ROLE = ethers.utils.solidityKeccak256(["bytes"], [adminRole]);
     // await treasury.grantRole(ADMIN_ROLE, wallet_2.address);
 
-    return { owner, vesting, token, vestingDistributionAddress, wallet_2, wallet_4, vestingMerkleTree, startTime_1, buyVesting };
+    return { owner, vesting, token, vestingDistributionAddress, wallet_1, wallet_2, wallet_3, wallet_4, vestingMerkleTree, startTime_1, buyVesting };
   }
 
   describe("Deployment", function () {
@@ -158,8 +243,8 @@ describe("VESTING", function () {
       obj = buyVesting[3];
     
       const leaf = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
 
       const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
@@ -169,6 +254,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -183,7 +269,140 @@ describe("VESTING", function () {
       const aaaa = ethers.BigNumber.from(10);
 
       expect(aftBalance).to.be.gt(prevBalance);
-      expect(aftBalance).to.be.equal(aaaa);    
+      expect(aftBalance).to.be.equal(aaaa); 
+
+      await expect(vesting
+        .connect(wallet_4)
+        .claimToken(
+          obj.id,
+          obj.allocationType,
+          obj.totalVestingAmount,
+          obj.TGE,
+          obj.start,
+          obj.cliffDuration,
+          obj.vestingDuration,
+          proof
+      )).to.be.revertedWith("Cliff Error")
+    });
+
+    it("Should not claim TGE when update root TGE == 0", async function() {
+      const { owner, vesting, token, vestingDistributionAddress, wallet_2, wallet_4, vestingMerkleTree, startTime_1, buyVesting } = await loadFixture(deployVesting); 
+
+      vestingRootHash = vestingMerkleTree.getRoot();
+      let vestingRoot = "0x".concat(String(vestingRootHash.toString('hex')));
+      await vesting.connect(owner).updateRoot(vestingRootHash);
+      let rootUpdated = await vesting.root();
+      expect(String(rootUpdated)).to.be.equal(vestingRoot);
+
+      obj = buyVesting[3];
+    
+      const leaf = ethers.utils.solidityPack(
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+      );
+
+      const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
+      const proof = vestingMerkleTree.getHexProof(leafNode);
+      const prevBalance = await token.balanceOf(wallet_4.address);
+
+      await vesting
+        .connect(wallet_4)
+        .claimToken(
+          obj.id,
+          obj.allocationType,
+          obj.totalVestingAmount,
+          obj.TGE,
+          obj.start,
+          obj.cliffDuration,
+          obj.vestingDuration,
+          proof
+      );
+
+      //const abc = await vesting.connect(wallet_4).userVestingSchedule(wallet_4.address, 1);
+      const aftBalance = await token.balanceOf(wallet_4.address);
+      const aaaa = ethers.BigNumber.from(10);
+
+      expect(aftBalance).to.be.gt(prevBalance);
+      expect(aftBalance).to.be.equal(aaaa); 
+
+      let buyVesting_re = [
+        {
+          candidate: wallet_2.address,
+          id: 2,
+          allocationType: 1,
+          totalVestingAmount: 100,
+          TGE: 1000,
+          start: Math.floor(new Date().getTime() / 1000),
+          cliffDuration: 86400,
+          vestingDuration: 864000,
+        },
+        {
+          candidate: wallet_4.address,
+          id: 4,
+          allocationType: 1,
+          totalVestingAmount: ethers.BigNumber.from(100),
+          TGE: 0,
+          start: startTime_1,
+          cliffDuration: 86400,
+          vestingDuration: 864000,
+        },
+      ];
+  
+      const leafNodes = buyVesting_re.map((obj) => {
+        let leafNode = ethers.utils.solidityPack(
+          ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+          [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        );
+        return ethers.utils.solidityKeccak256(["bytes"], [leafNode]);
+      });
+  
+      let vestingMerkleTree_re = new MerkleTree(leafNodes, keccak256, {
+        sortPairs: true,
+      });
+
+      let vestingRootHash_re = vestingMerkleTree_re.getRoot();
+      let vestingRoot_re = "0x".concat(String(vestingRootHash_re.toString('hex')));
+      await vesting.connect(owner).updateRoot(vestingRootHash_re);
+      let rootUpdated_re = await vesting.root();
+
+      expect(String(rootUpdated_re)).to.be.equal(vestingRoot_re);
+
+      obj_re = buyVesting_re[1];
+    
+      const leaf_re = ethers.utils.solidityPack(
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj_re.candidate, obj_re.id, obj_re.allocationType, obj_re.totalVestingAmount, obj_re.TGE, obj_re.start, obj_re.cliffDuration, obj_re.vestingDuration]
+      );
+
+      const leafNode_re = ethers.utils.solidityKeccak256(["bytes"], [leaf_re]);
+      const proof_re = vestingMerkleTree_re.getHexProof(leafNode_re);
+
+
+      await expect(vesting
+        .connect(wallet_4)
+        .claimToken(
+          obj_re.id,
+          obj_re.allocationType,
+          obj_re.totalVestingAmount,
+          obj_re.TGE,
+          obj_re.start,
+          obj_re.cliffDuration,
+          obj_re.vestingDuration,
+          proof_re
+      )).to.be.reverted;   
+
+      await expect(vesting
+        .connect(wallet_4)
+        .claimToken(
+          obj_re.id,
+          obj_re.allocationType,
+          obj_re.totalVestingAmount,
+          obj_re.TGE,
+          obj_re.start,
+          obj_re.cliffDuration,
+          obj_re.vestingDuration,
+          proof_re
+      )).to.be.revertedWith("Cliff Error");
     });
 
     it("Should claim TGE && 1 day Vest", async function() {
@@ -198,8 +417,8 @@ describe("VESTING", function () {
       obj = buyVesting[3];
     
       const leaf = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
 
       const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
@@ -211,6 +430,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -241,8 +461,8 @@ describe("VESTING", function () {
       obj = buyVesting[3];
     
       const leaf = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
 
       const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
@@ -251,6 +471,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -269,6 +490,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -295,8 +517,8 @@ describe("VESTING", function () {
       obj = buyVesting[3];
     
       const leaf = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
 
       const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
@@ -305,6 +527,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -323,6 +546,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -351,8 +575,8 @@ describe("VESTING", function () {
       obj = buyVesting[3];
     
       const leaf = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
 
       const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
@@ -361,6 +585,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -379,6 +604,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -400,6 +626,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -427,15 +654,15 @@ describe("VESTING", function () {
       obj = buyVesting[3];
     
       const leaf = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
 
       const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
       const proof = vestingMerkleTree.getHexProof(leafNode);
       
 
-      await expect(vesting.connect(wallet_4).claimToken(obj.allocationType, ethers.BigNumber.from(19), obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration, proof)).to.be.reverted;
+      await expect(vesting.connect(wallet_4).claimToken(obj.id, obj.allocationType, ethers.BigNumber.from(19), obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration, proof)).to.be.reverted;
     });
 
     it("Shouldn't claim TGE if TGE larger than 100%", async function() {
@@ -450,15 +677,15 @@ describe("VESTING", function () {
       obj = buyVesting[3];
     
       const leaf = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
 
       const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
       const proof = vestingMerkleTree.getHexProof(leafNode);
       
 
-      await expect(vesting.connect(wallet_4).claimToken(obj.allocationType, obj.totalVestingAmount, 10010, obj.start, obj.cliffDuration, obj.vestingDuration, proof)).to.be.reverted;
+      await expect(vesting.connect(wallet_4).claimToken(obj.id, obj.allocationType, obj.totalVestingAmount, 10010, obj.start, obj.cliffDuration, obj.vestingDuration, proof)).to.be.reverted;
     });
 
     it("Shouldn't claim if claim enough", async function() {
@@ -473,8 +700,8 @@ describe("VESTING", function () {
       obj = buyVesting[3];
     
       const leaf = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
 
       const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
@@ -483,6 +710,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -501,6 +729,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -510,7 +739,7 @@ describe("VESTING", function () {
           proof
       );
 
-      await expect(vesting.connect(wallet_4).claimToken(obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration, proof)).to.be.reverted;
+      await expect(vesting.connect(wallet_4).claimToken(obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration, proof)).to.be.reverted;
     });
 
     it("Shouldn't claim if still in cliff", async function() {
@@ -525,8 +754,8 @@ describe("VESTING", function () {
       obj = buyVesting[3];
     
       const leaf = ethers.utils.solidityPack(
-        ["address", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
-        [obj.candidate, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
+        ["address", "uint32", "uint", "uint256", "uint16", "uint32", "uint32", "uint32"],
+        [obj.candidate, obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration]
       );
 
       const leafNode = ethers.utils.solidityKeccak256(["bytes"], [leaf]);
@@ -535,6 +764,7 @@ describe("VESTING", function () {
       await vesting
         .connect(wallet_4)
         .claimToken(
+          obj.id,
           obj.allocationType,
           obj.totalVestingAmount,
           obj.TGE,
@@ -550,11 +780,10 @@ describe("VESTING", function () {
 
       await time.increase(100);
 
-      await expect(vesting.connect(wallet_4).claimToken(obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration, proof)).to.be.reverted;
+      await expect(vesting.connect(wallet_4).claimToken(obj.id, obj.allocationType, obj.totalVestingAmount, obj.TGE, obj.start, obj.cliffDuration, obj.vestingDuration, proof)).to.be.reverted;
     });
 
 
   });
-
 
 });

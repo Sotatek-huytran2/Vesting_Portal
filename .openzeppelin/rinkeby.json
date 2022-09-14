@@ -1,20 +1,20 @@
 {
   "manifestVersion": "3.2",
   "admin": {
-    "address": "0x771B57A0A402ebfb970aF2B09d193d1DcFB79d42",
-    "txHash": "0x48b29cd8925eea4caba971c6cbbb2b46c732ec0507bb23c88e935f10a1b5e490"
+    "address": "0x710FE737528aAC0902151F0143fb7B0A02a335d9",
+    "txHash": "0x4ce196a5c8a024ea038ffc535ad297d2e5650839b22611d2e9be90c10dd56edd"
   },
   "proxies": [
     {
-      "address": "0xD0a27fb80D925eFd2Ee9e9DBADF2EC776BbF8cc2",
-      "txHash": "0x0a423e6798cc209e797d4256cc6e84641bc414caf49daa62f6f01daa6b9dfe5c",
+      "address": "0x439c1AB1F7B724fD1AF40D7d4Fdc687D96B30be9",
+      "txHash": "0xf563bced6d2483dec80de5bcb898162b686fc061f7cbfd4b79c7ccab40e1eb03",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "2ff6786e0aa71a29febe53b11008b9177233d81737da00724483093955337bf2": {
-      "address": "0xA42DDCB2DE7caE63e2e6452E9B1DF1dE18a01e98",
-      "txHash": "0x2a3160ccd22775f24bbca606b3b2c89145f18e2b97c1564a2de9e0708b31e961",
+    "9a5321b790e9ade7c19619eaf65752850d1fc160876ff91906c9d63106480a32": {
+      "address": "0x1cB9d210f00Fac2Ef795210A058aAbcD7Db1e157",
+      "txHash": "0xe3e733f35552f74d6e68b24a6a9e49e8844568c08034194b120de3abaa75c664",
       "layout": {
         "storage": [
           {
@@ -91,44 +91,172 @@
             "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:116"
           },
           {
-            "label": "token",
+            "label": "ANGEL_ADDRESS_INDEX",
             "offset": 0,
             "slot": "201",
-            "type": "t_address",
+            "type": "t_uint16",
             "contract": "Vesting",
             "src": "contracts/Vesting.sol:34"
           },
           {
-            "label": "root",
-            "offset": 0,
-            "slot": "202",
-            "type": "t_bytes32",
+            "label": "PRESEED_ADDRESS_INDEX",
+            "offset": 2,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:35"
+          },
+          {
+            "label": "SEED_ADDRESS_INDEX",
+            "offset": 4,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:36"
+          },
+          {
+            "label": "PRIVATE_1_ADDRESS_INDEX",
+            "offset": 6,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:37"
+          },
+          {
+            "label": "PRIVATE_2_ADDRESS_INDEX",
+            "offset": 8,
+            "slot": "201",
+            "type": "t_uint16",
             "contract": "Vesting",
             "src": "contracts/Vesting.sol:38"
           },
           {
-            "label": "userVestingSchedule",
+            "label": "PUBLIC_ADDRESS_INDEX",
+            "offset": 10,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:39"
+          },
+          {
+            "label": "REWARDS_ADDRESS_INDEX",
+            "offset": 12,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:40"
+          },
+          {
+            "label": "TEAM_ADDRESS_INDEX",
+            "offset": 14,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:41"
+          },
+          {
+            "label": "ADVISORS_ADDRESS_INDEX",
+            "offset": 16,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:42"
+          },
+          {
+            "label": "MARKETING_ADDRESS_INDEX",
+            "offset": 18,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:43"
+          },
+          {
+            "label": "RESEARCH_FOUNDATION_ADDRESS_INDEX",
+            "offset": 20,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:44"
+          },
+          {
+            "label": "OPERATIONS_ADDRESS_INDEX",
+            "offset": 22,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:45"
+          },
+          {
+            "label": "ECOSYSTEM_ADDRESS_INDEX",
+            "offset": 24,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:46"
+          },
+          {
+            "label": "LIQUIDITY_ADDRESS_INDEX",
+            "offset": 26,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:47"
+          },
+          {
+            "label": "REVERSE_ADDRESS_INDEX",
+            "offset": 28,
+            "slot": "201",
+            "type": "t_uint16",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:48"
+          },
+          {
+            "label": "token",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_address",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:50"
+          },
+          {
+            "label": "VESTING_FREQUENCY",
+            "offset": 20,
+            "slot": "202",
+            "type": "t_uint32",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:52"
+          },
+          {
+            "label": "root",
             "offset": 0,
             "slot": "203",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(VestingSchedule)2443_storage))",
+            "type": "t_bytes32",
             "contract": "Vesting",
-            "src": "contracts/Vesting.sol:65"
+            "src": "contracts/Vesting.sol:54"
+          },
+          {
+            "label": "userVestingSchedule",
+            "offset": 0,
+            "slot": "204",
+            "type": "t_mapping(t_uint32,t_mapping(t_uint256,t_struct(VestingSchedule)2429_storage))",
+            "contract": "Vesting",
+            "src": "contracts/Vesting.sol:85"
           },
           {
             "label": "allocationAddress",
             "offset": 0,
-            "slot": "204",
+            "slot": "205",
             "type": "t_mapping(t_uint256,t_address)",
             "contract": "Vesting",
-            "src": "contracts/Vesting.sol:66"
+            "src": "contracts/Vesting.sol:86"
           },
           {
             "label": "admin",
             "offset": 0,
-            "slot": "205",
+            "slot": "206",
             "type": "t_mapping(t_address,t_bool)",
             "contract": "Vesting",
-            "src": "contracts/Vesting.sol:67"
+            "src": "contracts/Vesting.sol:87"
           }
         ],
         "types": {
@@ -156,71 +284,89 @@
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_mapping(t_uint256,t_struct(VestingSchedule)2443_storage))": {
-            "label": "mapping(address => mapping(uint256 => struct Vesting.VestingSchedule))",
-            "numberOfBytes": "32"
-          },
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(VestingSchedule)2443_storage)": {
+          "t_mapping(t_uint256,t_struct(VestingSchedule)2429_storage)": {
             "label": "mapping(uint256 => struct Vesting.VestingSchedule)",
             "numberOfBytes": "32"
           },
-          "t_struct(VestingSchedule)2443_storage": {
+          "t_mapping(t_uint32,t_mapping(t_uint256,t_struct(VestingSchedule)2429_storage))": {
+            "label": "mapping(uint32 => mapping(uint256 => struct Vesting.VestingSchedule))",
+            "numberOfBytes": "32"
+          },
+          "t_struct(VestingSchedule)2429_storage": {
             "label": "struct Vesting.VestingSchedule",
             "members": [
               {
-                "label": "totalVestingAmount",
-                "type": "t_uint256",
+                "label": "user",
+                "type": "t_address",
                 "offset": 0,
                 "slot": "0"
               },
               {
-                "label": "TGEAmount",
+                "label": "totalVestingAmount",
                 "type": "t_uint256",
                 "offset": 0,
                 "slot": "1"
               },
               {
-                "label": "claimed",
+                "label": "TGEAmount",
                 "type": "t_uint256",
                 "offset": 0,
                 "slot": "2"
               },
               {
-                "label": "start",
-                "type": "t_uint32",
+                "label": "claimed",
+                "type": "t_uint256",
                 "offset": 0,
                 "slot": "3"
               },
               {
-                "label": "cliff",
+                "label": "merkleTreeClaimed",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "id",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "start",
                 "type": "t_uint32",
                 "offset": 4,
-                "slot": "3"
+                "slot": "5"
+              },
+              {
+                "label": "cliff",
+                "type": "t_uint32",
+                "offset": 8,
+                "slot": "5"
               },
               {
                 "label": "duration",
                 "type": "t_uint32",
-                "offset": 8,
-                "slot": "3"
+                "offset": 12,
+                "slot": "5"
               },
               {
                 "label": "lasTimeStampClaim",
                 "type": "t_uint32",
-                "offset": 12,
-                "slot": "3"
+                "offset": 16,
+                "slot": "5"
               },
               {
                 "label": "TGE",
                 "type": "t_uint16",
-                "offset": 16,
-                "slot": "3"
+                "offset": 20,
+                "slot": "5"
               }
             ],
-            "numberOfBytes": "128"
+            "numberOfBytes": "192"
           },
           "t_uint16": {
             "label": "uint16",

@@ -11,9 +11,25 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 
-contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+contract Vesting_V2 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
 
     using SafeERC20Upgradeable for IERC20Upgradeable;
+
+    // uint16 public constant ANGEL_ADDRESS_INDEX = 0;
+    // uint16 public constant PRESEED_ADDRESS_INDEX = 1;
+    // uint16 public constant SEED_ADDRESS_INDEX = 2;
+    // uint16 public constant PRIVATE_1_ADDRESS_INDEX = 3;
+    // uint16 public constant PRIVATE_2_ADDRESS_INDEX = 4;
+    // uint16 public constant PUBLIC_ADDRESS_INDEX = 5;
+    // uint16 public constant REWARDS_ADDRESS_INDEX = 6;
+    // uint16 public constant TEAM_ADDRESS_INDEX = 7;
+    // uint16 public constant ADVISORS_ADDRESS_INDEX = 8;
+    // uint16 public constant MARKETING_ADDRESS_INDEX = 9;
+    // uint16 public constant RESEARCH_FOUNDATION_ADDRESS_INDEX = 12;
+    // uint16 public constant OPERATIONS_ADDRESS_INDEX = 13;
+    // uint16 public constant ECOSYSTEM_ADDRESS_INDEX = 14;
+    // uint16 public constant LIQUIDITY_ADDRESS_INDEX = 15;
+    // uint16 public constant REVERSE_ADDRESS_INDEX = 16;
 
     uint16 public  ANGEL_ADDRESS_INDEX;
     uint16 public  PRESEED_ADDRESS_INDEX;
@@ -183,7 +199,7 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
             uint256 tgeVesting = (_totalVestingAmount * _TGE) / PRECISE_TGE;
             user.TGEAmount = tgeVesting;
             amountVesting = tgeVesting;
-            user.lasTimeStampClaim = (_startTime + _cliffDuration);
+            user.lasTimeStampClaim = (_startTime + _cliffDuration) / VESTING_FREQUENCY;
 
             if (block.timestamp >= _startTime + _cliffDuration) {
 
@@ -191,7 +207,7 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
                 (uint256 claimable, uint32 nextDaysClaim) = claimableToken(_id, _allocationType);
                 amountVesting = amountVesting + claimable;
                 
-                user.lasTimeStampClaim = user.lasTimeStampClaim + (nextDaysClaim * VESTING_FREQUENCY);
+                user.lasTimeStampClaim = user.lasTimeStampClaim + nextDaysClaim;
                 user.claimed = user.claimed + claimable;            
             }
 
@@ -199,14 +215,14 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
         }
         else {
             require(block.timestamp >= user.start + user.cliff, "Cliff Error");
-            require(block.timestamp >= user.lasTimeStampClaim, "Period Error");
+            require(block.timestamp / VESTING_FREQUENCY >= user.lasTimeStampClaim, "Period Error");
             
             uint32 nextDaysClaim;
 
             (amountVesting, nextDaysClaim) = claimableToken(_id, _allocationType);
 
             user.claimed = user.claimed + amountVesting;
-            user.lasTimeStampClaim = user.lasTimeStampClaim + (nextDaysClaim * VESTING_FREQUENCY);
+            user.lasTimeStampClaim = user.lasTimeStampClaim + nextDaysClaim;
         }
         
         IERC20Upgradeable(token).safeTransferFrom(address(allocationAddress[_allocationType]), address(msg.sender), amountVesting);
@@ -219,17 +235,16 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
 
         uint32 claimTimes;
         uint32 dayIndex = uint32(block.timestamp / VESTING_FREQUENCY);
-        uint32 dayIndexBefore = uint32(user.lasTimeStampClaim / VESTING_FREQUENCY);
 
         if (dayIndex < user.lasTimeStampClaim) {
             return (0, 0);
         }
 
         if (VESTING_FREQUENCY == 1) {
-            claimTimes = dayIndex - dayIndexBefore;
+            claimTimes = dayIndex - user.lasTimeStampClaim;
         }
         else {
-            claimTimes = dayIndex - dayIndexBefore + 1;
+            claimTimes = dayIndex - user.lasTimeStampClaim + 1;
         }
 
         uint256 dayDurationVesting = user.duration / VESTING_FREQUENCY;
