@@ -40,23 +40,23 @@ async function main() {
 
   const ONE_DAY = 24 * 60 * 60;
 
-  const VESTING = await hre.ethers.getContractFactory("Vesting");
-  const vesting = await upgrades.deployProxy(VESTING, [tokenAddress, ONE_DAY, vestingDistributionAddress], {initializer: 'initialize'});
-  // const vesting = await VESTING.deploy();
+  // const VESTING = await hre.ethers.getContractFactory("Vesting");
+  // const vesting = await upgrades.deployProxy(VESTING, [tokenAddress, ONE_DAY, vestingDistributionAddress], {initializer: 'initialize'});
+  // // const vesting = await VESTING.deploy();
 
-  await vesting.deployed();
+  // await vesting.deployed();
 
-  console.log("VESTING PORTAL PROXY deployed at: ", vesting.address);
+  // console.log("VESTING PORTAL PROXY deployed at: ", vesting.address);
 
   // await vesting.initialize(tokenAddress, ONE_DAY, vestingDistributionAddress);
   /// ================ Deploy Proxy ==========================
 
   /// ================ UPGRADE ==========================
-  // const ProxyAddress = "0x8123Bfa60cC3ae34Ea7c000dCE0B429D8Edd7F93"
-  // const Treasury = await ethers.getContractFactory("Vesting_V2");
-  // const treasury = await upgrades.upgradeProxy(ProxyAddress, Treasury);
+  const ProxyAddress = "0x439c1AB1F7B724fD1AF40D7d4Fdc687D96B30be9"
+  const Treasury = await ethers.getContractFactory("Vesting_V2");
+  const treasury = await upgrades.upgradeProxy(ProxyAddress, Treasury);
 
-  // console.log("Vesting upgraded: ", treasury.address);
+  console.log("Vesting upgraded: ", treasury.address);
   /// ================ UPGRADE ==========================
 
 

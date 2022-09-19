@@ -221,7 +221,7 @@ contract Vesting is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
         uint32 dayIndex = uint32(block.timestamp / VESTING_FREQUENCY);
         uint32 dayIndexBefore = uint32(user.lasTimeStampClaim / VESTING_FREQUENCY);
 
-        if (dayIndex < user.lasTimeStampClaim) {
+        if (dayIndex < dayIndexBefore) {
             return (0, 0);
         }
 
